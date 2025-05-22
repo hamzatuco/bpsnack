@@ -28,9 +28,57 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>bpsnack</title>  <link rel="manifest" href="manifest.json">
 
-  <title>bpsnack</title>
-  <link rel="manifest" href="manifest.json">
+  <!-- Firebase SDK scripts using compatible versions to fix js/web interoperability issues -->
+  <!-- Use version 8.x which has better compatibility with Flutter 3.x -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  
+  <!-- Initialize Firebase manually to ensure it's ready before Flutter initializes -->
+  <script>
+    // Firebase configuration from firebase_options.dart
+    var firebaseConfig = {
+      apiKey: "AIzaSyCHCNMvgZ5Lk6xlUrchpYjc2-3be7k4YQY",
+      authDomain: "bpsnackbar-ee672.firebaseapp.com",
+      projectId: "bpsnackbar-ee672",
+      storageBucket: "bpsnackbar-ee672.firebasestorage.app",
+      messagingSenderId: "862301517627",
+      appId: "1:862301517627:web:3b9ca6eac100ed22dce91e",
+    };
+    
+    // Initialize Firebase
+    if (typeof firebase !== 'undefined') {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        console.log("Firebase initialized from index.html");
+      } catch (e) {
+        console.error("Error initializing Firebase:", e);
+      }
+    } else {
+      console.warn("Firebase SDK not loaded yet");
+    }
+  </script>
+  <script>
+    // Your web app's Firebase configuration is loaded from firebase_options.dart
+    // This script is just in case the automatic initialization fails
+    window.firebaseConfig = {
+      apiKey: "AIzaSyCHCNMvgZ5Lk6xlUrchpYjc2-3be7k4YQY",
+      authDomain: "bpsnackbar-ee672.firebaseapp.com",
+      projectId: "bpsnackbar-ee672",
+      storageBucket: "bpsnackbar-ee672.firebasestorage.app",
+      messagingSenderId: "862301517627",
+      appId: "1:862301517627:web:3b9ca6eac100ed22dce91e",
+    };
+    
+    // Initialize Firebase if not already initialized
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+      firebase.initializeApp(window.firebaseConfig);
+    }
+  </script>
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

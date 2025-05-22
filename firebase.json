@@ -1,0 +1,15 @@
+{
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "bpsnackbar-ee672",
+          "configurations": { "web": "1:862301517627:web:3b9ca6eac100ed22dce91e" }
+        }
+      }
+    }
+  }
+}
