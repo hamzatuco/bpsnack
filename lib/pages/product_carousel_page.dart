@@ -12,6 +12,7 @@ class SlideData {
   final bool isLeft;
   final CrossAxisAlignment crossAlign;
   final List<String> productUrls;
+  final int? price; // Add price property
   SlideData({
     required this.backgroundUrl,
     required this.overlayColor,
@@ -20,6 +21,7 @@ class SlideData {
     required this.isLeft,
     required this.crossAlign,
     required this.productUrls,
+    required this.price, // Add price to constructor
   });
 }
 
@@ -42,19 +44,34 @@ Future<List<SlideData>> _fetchSlideData(List<QueryDocumentSnapshot> docs) async 
     final desc = data['description'] as String? ?? '';
     // products URLs
     final ids = data['products'] as List<dynamic>? ?? [];
+    // Sort the products by their indices if an index field exists in the database
     final prodSnaps = await FirebaseFirestore.instance
       .collection('products')
       .where(FieldPath.documentId, whereIn: ids)
       .get();
+
+    final List<Map<String, dynamic>> sortedProducts = prodSnaps.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'index': data['index'] ?? 0, // Default to 0 if index is missing
+        'imgPath': data['imgPath'],
+      };
+    }).toList()
+      ..sort((a, b) => (a['index'] as int).compareTo(b['index'] as int));
+
     final List<String> productUrls = [];
-    for (var p in prodSnaps.docs) {
-      final prodData = p.data() as Map<String, dynamic>;
-      final String? path = prodData['imgPath'];
+    for (var product in sortedProducts) {
+      final String? path = product['imgPath'];
       if (path != null) {
         final url = await storage.refFromURL(path).getDownloadURL();
         productUrls.add(url);
       }
     }
+
+    // Add debugging logs to verify the order of productUrls
+    print('Sorted product URLs: $productUrls');
+    // price
+    final price = data['price'] as int?;
     return SlideData(
       backgroundUrl: bgUrl,
       overlayColor: Colors.black.withOpacity(opacity),
@@ -63,6 +80,7 @@ Future<List<SlideData>> _fetchSlideData(List<QueryDocumentSnapshot> docs) async 
       isLeft: isLeft,
       crossAlign: crossAlign,
       productUrls: productUrls,
+      price: price, // Add price to SlideData
     );
   }));
 }
@@ -108,41 +126,124 @@ class ProductCarouselPage extends StatelessWidget {
                         if (slide.backgroundUrl != null)
                           CachedNetworkImage(imageUrl: slide.backgroundUrl!, fit: BoxFit.cover),
                         Container(color: slide.overlayColor),
-                        Align(
-                          alignment: slide.isLeft ? Alignment.bottomLeft : Alignment.bottomRight,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: slide.crossAlign, children: [
-                              Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 100, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 8),
-                              Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40)),
-                            ]),
-                          ),
-                        ),
-                        //////////////////////////SLIKE//////////////////////////
                         Padding(
                           padding: slide.isLeft
-                            ? const EdgeInsets.only(right: 150)
-                            : const EdgeInsets.only(left: 150),
-                          child: Align(
-                            alignment: slide.isLeft ? Alignment.centerRight : Alignment.centerLeft,
-                            child: SizedBox(
-                              width: slide.productUrls.length > 1 ? 700.0 + 80.0 : 700.0,
-                              height: 700.0,
-                              child: Stack(
-                                children: slide.productUrls.asMap().entries.map((entry) {
-                                  final url = entry.value;
-                                  return Center(
-                                    child: CachedNetworkImage(
-                                      imageUrl: url,
-                                      width: 800.0,
-                                      height: 800.0,
-                                      fit: BoxFit.cover,
+                            ? const EdgeInsets.symmetric(horizontal: 150)
+                            : const EdgeInsets.symmetric(horizontal: 150),
+                          child: Row(
+                            mainAxisAlignment: slide.isLeft ? MainAxisAlignment.start : MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: slide.isLeft
+                              ? [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: slide.crossAlign,
+                                        children: [
+                                          Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 70, fontWeight: FontWeight.bold)),
+                                          const SizedBox(height: 8),
+                                          Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40)),
+                                          const SizedBox(height: 16),
+                                          if (slide.price != null)
+                                            Text('Price: ${slide.price}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
                                     ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
+                                  ),
+                                  SizedBox(
+                                    width: slide.productUrls.length > 1 ? 850.0 : 800.0,
+                                    height: 700.0,
+                                    child: Stack(
+                                      children: slide.productUrls.asMap().entries.map((entry) {
+                                        final index = entry.key;
+                                        final url = entry.value;
+                                        // If only one product, always show red centered container
+                                        if (slide.productUrls.length == 1) {
+                                          return Center(
+                                            child: Container(
+                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
+                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain)
+                                            ),
+                                          );
+                                        } else if (index == 0) {
+                                          return Positioned(
+                                            bottom: 0,
+                                            right: -70,
+                                            child: Container(
+                                              decoration: BoxDecoration(border: Border.all(color: Colors.green, width: 5)),
+                                              child: CachedNetworkImage(imageUrl: url, width: 500, height: 500, fit: BoxFit.contain),
+                                            ),
+                                          );
+                                        } else if (index == 1) {
+                                          return Center(
+                                            child: Container(
+                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
+                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
+                                            ),
+                                          );
+                                        }
+                                        return const SizedBox.shrink();
+                                      }).toList().reversed.toList(),
+                                    ),
+                                  ),
+                                ]
+                              : [
+                                  SizedBox(
+                                    width: slide.productUrls.length > 1 ? 850.0 : 800.0,
+                                    height: 700.0,
+                                    child: Stack(
+                                      children: slide.productUrls.asMap().entries.map((entry) {
+                                        final index = entry.key;
+                                        final url = entry.value;
+                                        // If only one product, always show red centered container
+                                        if (slide.productUrls.length == 1) {
+                                          return Center(
+                                            child: Container(
+                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
+                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
+                                            ),
+                                          );
+                                        } else if (index == 0) {
+                                          return Positioned(
+                                            bottom: 0,
+                                            left: -70,
+                                            child: Container(
+                                              decoration: BoxDecoration(border: Border.all(color: Colors.green, width: 5)),
+                                              child: CachedNetworkImage(imageUrl: url, width: 500, height: 500, fit: BoxFit.contain),
+                                            ),
+                                          );
+                                        } else if (index == 1) {
+                                          return Center(
+                                            child: Container(
+                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
+                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
+                                            ),
+                                          );
+                                        }
+                                        return const SizedBox.shrink();
+                                      }).toList().reversed.toList(),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: slide.crossAlign,
+                                        children: [
+                                          Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 70, fontWeight: FontWeight.bold)),
+                                          const SizedBox(height: 8),
+                                          Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40)),
+                                          const SizedBox(height: 16),
+                                          if (slide.price != null)
+                                            Text('Price: ${slide.price}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                           ),
                         ),
                       ]),
