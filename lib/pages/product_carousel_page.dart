@@ -34,9 +34,8 @@ Future<List<SlideData>> _fetchSlideData(List<QueryDocumentSnapshot> docs) async 
     }
     // overlay opacity
     final opacity = (data['opacity'] as num? ?? 0).toDouble().clamp(0,100) / 100;
-    // positions
-    final leftIds = (data['positions'] as Map<String,dynamic>? ?? {})['0'] as List<dynamic>? ?? [];
-    final isLeft = leftIds.contains(snapDoc.id);
+    // read new isLeft flag directly
+    final isLeft = (data['isLeft'] as bool?) ?? false;
     final crossAlign = isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end;
     // title/desc
     final title = data['name'] as String? ?? '';
@@ -114,37 +113,31 @@ class ProductCarouselPage extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: slide.crossAlign, children: [
-                              Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                              Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 100, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 8),
-                              Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                              Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40)),
                             ]),
                           ),
                         ),
-                        Align(
-                          alignment: slide.isLeft ? Alignment.bottomRight : Alignment.bottomLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
+                        //////////////////////////SLIKE//////////////////////////
+                        Padding(
+                          padding: slide.isLeft
+                            ? const EdgeInsets.only(right: 150)
+                            : const EdgeInsets.only(left: 150),
+                          child: Align(
+                            alignment: slide.isLeft ? Alignment.centerRight : Alignment.centerLeft,
                             child: SizedBox(
-                              width: slide.productUrls.length > 1 ? 120.0 + 40.0 : 120.0,
-                              height: 120.0,
+                              width: slide.productUrls.length > 1 ? 700.0 + 80.0 : 700.0,
+                              height: 700.0,
                               child: Stack(
                                 children: slide.productUrls.asMap().entries.map((entry) {
-                                  final idx = entry.key;
                                   final url = entry.value;
-                                  // index 0 larger, index 1 smaller
-                                  final size = idx == 0 ? 120.0 : 80.0;
-                                  final overlap = 40.0;
-                                  return Positioned(
-                                    left: slide.isLeft ? (idx == 0 ? 0.0 : overlap) : null,
-                                    right: slide.isLeft ? null : (idx == 0 ? 0.0 : overlap),
-                                    bottom: 0,
+                                  return Center(
                                     child: CachedNetworkImage(
                                       imageUrl: url,
-                                      width: size,
-                                      height: size,
+                                      width: 800.0,
+                                      height: 800.0,
                                       fit: BoxFit.cover,
-                                      placeholder: (_, __) => SizedBox(width: size, height: size, child: const Center(child: CircularProgressIndicator())),
-                                      errorWidget: (_, __, ___) => SizedBox(width: size, height: size, child: const Icon(Icons.error)),
                                     ),
                                   );
                                 }).toList(),

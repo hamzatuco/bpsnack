@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'pages/product_carousel_page.dart';
 
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'BP Snack Display',
       theme: ThemeData(
+        fontFamily: GoogleFonts.poppins(fontWeight: FontWeight.bold).fontFamily,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.amber,
           brightness: Brightness.dark,
