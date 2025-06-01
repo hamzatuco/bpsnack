@@ -2,6 +2,18 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "hosting": [
+    {
+      "target": "app1",
+      "public": "build/app1",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    },
+    {
+      "target": "app2",
+      "public": "build/app2",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    }
+  ],
   "flutter": {
     "platforms": {
       "dart": {
