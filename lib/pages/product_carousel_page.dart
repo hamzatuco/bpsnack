@@ -129,7 +129,7 @@ class ProductCarouselPage extends StatelessWidget {
                         Padding(
                           padding: slide.isLeft
                             ? const EdgeInsets.symmetric(horizontal: 150)
-                            : const EdgeInsets.symmetric(horizontal: 150),
+                            : const EdgeInsets.symmetric(horizontal: 180), // Increased by 20%
                           child: Row(
                             mainAxisAlignment: slide.isLeft ? MainAxisAlignment.start : MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -142,12 +142,12 @@ class ProductCarouselPage extends StatelessWidget {
                                         mainAxisSize: MainAxisSize.min,
                                         crossAxisAlignment: slide.crossAlign,
                                         children: [
-                                          Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 70, fontWeight: FontWeight.bold)),
+                                          Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 70, fontWeight: FontWeight.bold), textAlign: slide.isLeft ? TextAlign.left : TextAlign.right),
                                           const SizedBox(height: 8),
-                                          Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40)),
+                                          Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40), textAlign: slide.isLeft ? TextAlign.left : TextAlign.right),
                                           const SizedBox(height: 16),
                                           if (slide.price != null)
-                                            Text('Price: ${slide.price}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                                            Text('Cijena: ${slide.price}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
                                         ],
                                       ),
                                     ),
@@ -162,26 +162,17 @@ class ProductCarouselPage extends StatelessWidget {
                                         // If only one product, always show red centered container
                                         if (slide.productUrls.length == 1) {
                                           return Center(
-                                            child: Container(
-                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
-                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain)
-                                            ),
+                                            child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
                                           );
                                         } else if (index == 0) {
                                           return Positioned(
                                             bottom: 0,
                                             right: -70,
-                                            child: Container(
-                                              decoration: BoxDecoration(border: Border.all(color: Colors.green, width: 5)),
-                                              child: CachedNetworkImage(imageUrl: url, width: 500, height: 500, fit: BoxFit.contain),
-                                            ),
+                                            child: CachedNetworkImage(imageUrl: url, width: 500, height: 500, fit: BoxFit.contain),
                                           );
                                         } else if (index == 1) {
                                           return Center(
-                                            child: Container(
-                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
-                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
-                                            ),
+                                            child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
                                           );
                                         }
                                         return const SizedBox.shrink();
@@ -200,26 +191,17 @@ class ProductCarouselPage extends StatelessWidget {
                                         // If only one product, always show red centered container
                                         if (slide.productUrls.length == 1) {
                                           return Center(
-                                            child: Container(
-                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
-                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
-                                            ),
+                                            child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
                                           );
                                         } else if (index == 0) {
                                           return Positioned(
                                             bottom: 0,
                                             left: -70,
-                                            child: Container(
-                                              decoration: BoxDecoration(border: Border.all(color: Colors.green, width: 5)),
-                                              child: CachedNetworkImage(imageUrl: url, width: 500, height: 500, fit: BoxFit.contain),
-                                            ),
+                                            child: CachedNetworkImage(imageUrl: url, width: 500, height: 500, fit: BoxFit.contain),
                                           );
                                         } else if (index == 1) {
                                           return Center(
-                                            child: Container(
-                                              decoration: BoxDecoration(border: Border.all(color: Colors.red, width: 5)),
-                                              child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
-                                            ),
+                                            child: CachedNetworkImage(imageUrl: url, width: 800, height: 800, fit: BoxFit.contain),
                                           );
                                         }
                                         return const SizedBox.shrink();
@@ -233,12 +215,12 @@ class ProductCarouselPage extends StatelessWidget {
                                         mainAxisSize: MainAxisSize.min,
                                         crossAxisAlignment: slide.crossAlign,
                                         children: [
-                                          Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 70, fontWeight: FontWeight.bold)),
+                                          Text(slide.title, style: const TextStyle(color: Colors.white, fontSize: 70, fontWeight: FontWeight.bold), textAlign: slide.isLeft ? TextAlign.left : TextAlign.right),
                                           const SizedBox(height: 8),
-                                          Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40)),
+                                          Text(slide.desc, style: const TextStyle(color: Colors.white70, fontSize: 40), textAlign: slide.isLeft ? TextAlign.left : TextAlign.right),
                                           const SizedBox(height: 16),
                                           if (slide.price != null)
-                                            Text('Price: ${slide.price}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                                            Text('Cijena: ${slide.price}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
                                         ],
                                       ),
                                     ),
