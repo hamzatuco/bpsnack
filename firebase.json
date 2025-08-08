@@ -4,13 +4,8 @@
   },
   "hosting": [
     {
-      "target": "app1",
-      "public": "build/app1",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
-    },
-    {
-      "target": "app2",
-      "public": "build/app2",
+      "target": "bpsnackbar-tv",
+      "public": "build/web",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
     }
   ],

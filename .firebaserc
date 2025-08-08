@@ -1,18 +1,14 @@
 {
   "projects": {
-    "bpapp": "bpsnackbar-ee672"
+    "default": "bpsnackbar-ee672"
   },
   "targets": {
     "bpsnackbar-ee672": {
       "hosting": {
-        "app1": [
-          "bpapp-ad228"
-        ],
-        "app2": [
-          "app2-7770c"
+        "bpsnackbar-tv": [
+          "bpsnackbar-tv"
         ]
       }
     }
-  },
-  "etags": {}
+  }
 }

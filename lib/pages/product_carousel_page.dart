@@ -27,62 +27,94 @@ class SlideData {
 
 Future<List<SlideData>> _fetchSlideData(List<QueryDocumentSnapshot> docs) async {
   final storage = FirebaseStorage.instance;
-  return await Future.wait(docs.map((snapDoc) async {
-    final data = snapDoc.data() as Map<String, dynamic>;
-    // background downloadURL
-    String? bgUrl;
-    if (data['backgroundImagePath'] != null) {
-      bgUrl = await storage.refFromURL(data['backgroundImagePath'] as String).getDownloadURL();
-    }
-    // overlay opacity
-    final opacity = (data['opacity'] as num? ?? 0).toDouble().clamp(0,100) / 100;
-    // read new isLeft flag directly
-    final isLeft = (data['isLeft'] as bool?) ?? false;
-    final crossAlign = isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end;
-    // title/desc
-    final title = data['name'] as String? ?? '';
-    final desc = data['description'] as String? ?? '';
-    // products URLs
-    final ids = data['products'] as List<dynamic>? ?? [];
-    // Sort the products by their indices if an index field exists in the database
-    final prodSnaps = await FirebaseFirestore.instance
-      .collection('products')
-      .where(FieldPath.documentId, whereIn: ids)
-      .get();
+  List<SlideData> slides = [];
+  for (var snapDoc in docs) {
+    try {
+      final data = snapDoc.data() as Map<String, dynamic>;
+      print('Offer doc: ${snapDoc.id}, data: $data');
 
-    final List<Map<String, dynamic>> sortedProducts = prodSnaps.docs.map((doc) {
-      final data = doc.data();
-      return {
-        'index': data['index'] ?? 0, // Default to 0 if index is missing
-        'imgPath': data['imgPath'],
-      };
-    }).toList()
-      ..sort((a, b) => (a['index'] as int).compareTo(b['index'] as int));
-
-    final List<String> productUrls = [];
-    for (var product in sortedProducts) {
-      final String? path = product['imgPath'];
-      if (path != null) {
-        final url = await storage.refFromURL(path).getDownloadURL();
-        productUrls.add(url);
+      // background downloadURL
+      String? bgUrl;
+      if (data['backgroundImagePath'] != null && data['backgroundImagePath'] is String && (data['backgroundImagePath'] as String).isNotEmpty) {
+        try {
+          bgUrl = await storage.refFromURL(data['backgroundImagePath'] as String).getDownloadURL();
+        } catch (e) {
+          print('Greška kod backgroundImagePath za offer ${snapDoc.id}: $e');
+        }
+      } else {
+        print('Offer ${snapDoc.id} nema validan backgroundImagePath');
       }
-    }
 
-    // Add debugging logs to verify the order of productUrls
-    print('Sorted product URLs: $productUrls');
-    // price
-    final price = data['price'] as int?;
-    return SlideData(
-      backgroundUrl: bgUrl,
-      overlayColor: Colors.black.withOpacity(opacity),
-      title: title,
-      desc: desc,
-      isLeft: isLeft,
-      crossAlign: crossAlign,
-      productUrls: productUrls,
-      price: price, // Add price to SlideData
-    );
-  }));
+      // overlay opacity
+      final opacity = (data['opacity'] as num? ?? 0).toDouble().clamp(0, 100) / 100;
+      // read new isLeft flag directly
+      final isLeft = (data['isLeft'] as bool?) ?? false;
+      final crossAlign = isLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end;
+      // title/desc
+      final title = data['name'] as String? ?? '';
+      final desc = data['description'] as String? ?? '';
+
+      // products URLs
+      final ids = (data['products'] as List<dynamic>? ?? []).whereType<String>().toList();
+      if (ids.isEmpty) {
+        print('Offer ${snapDoc.id} nema proizvode (products) ili je prazno.');
+      }
+
+      List<Map<String, dynamic>> sortedProducts = [];
+      if (ids.isNotEmpty) {
+        try {
+          final prodSnaps = await FirebaseFirestore.instance
+              .collection('products')
+              .where(FieldPath.documentId, whereIn: ids)
+              .get();
+          sortedProducts = prodSnaps.docs.map((doc) {
+            final pdata = doc.data();
+            return {
+              'index': pdata['index'] ?? 0,
+              'imgPath': pdata['imgPath'],
+            };
+          }).toList()
+            ..sort((a, b) => (a['index'] as int).compareTo(b['index'] as int));
+        } catch (e) {
+          print('Greška kod učitavanja products za offer ${snapDoc.id}: $e');
+        }
+      }
+
+      final List<String> productUrls = [];
+      for (var product in sortedProducts) {
+        final String? path = product['imgPath'];
+        if (path != null && path.isNotEmpty) {
+          try {
+            final url = await storage.refFromURL(path).getDownloadURL();
+            productUrls.add(url);
+          } catch (e) {
+            print('Greška kod imgPath za product: $path, error: $e');
+          }
+        } else {
+          print('Product nema validan imgPath: $product');
+        }
+      }
+      print('Offer ${snapDoc.id} - sorted product URLs: $productUrls');
+
+      // price
+      final price = data['price'] as int?;
+
+      slides.add(SlideData(
+        backgroundUrl: bgUrl,
+        overlayColor: Colors.black.withOpacity(opacity),
+        title: title,
+        desc: desc,
+        isLeft: isLeft,
+        crossAlign: crossAlign,
+        productUrls: productUrls,
+        price: price,
+      ));
+    } catch (e) {
+      print('Greška kod obrade offer dokumenta: $e');
+    }
+  }
+  print('Ukupno uspešno kreiranih SlideData: ${slides.length}');
+  return slides;
 }
 
 class ProductCarouselPage extends StatelessWidget {
@@ -94,18 +126,25 @@ class ProductCarouselPage extends StatelessWidget {
       .collection('offers')
       .where('isActive', isEqualTo: true)
       .snapshots();
+    // Debug: Prikaz poruke kada se build pokrene
+    print('ProductCarouselPage build() pokrenut - čekam podatke iz Firestore offers kolekcije');
 
     return Scaffold(
-      body: StreamBuilder<QuerySnapshot>(        stream: stream,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: stream,
         builder: (ctx, snap) {
           if (snap.hasError) {
-            return Center(child: Text('Greška: ${snap.error}'));
+            print('Firestore error: \\${snap.error}');
+            return Center(child: Text('Greška: ���${snap.error}'));
           }
           if (snap.connectionState == ConnectionState.waiting) {
+            print('Firestore offers loading...');
             return const Center(child: CircularProgressIndicator());
           }
           final docs = snap.data!.docs;
+          print('Firestore offers loaded: broj dokumenata = \\${docs.length}');
           if (docs.isEmpty) {
+            print('Nema ponuda u Firestore-u');
             return const Center(child: Text('Nema ponuda'));
           }
 
@@ -113,9 +152,14 @@ class ProductCarouselPage extends StatelessWidget {
             future: _fetchSlideData(docs),
             builder: (fCtx, fSnap) {
               if (fSnap.connectionState != ConnectionState.done) {
+                print('Učitavanje slajdova (SlideData) iz Firestore-a...');
                 return const Center(child: CircularProgressIndicator());
               }
               final slides = fSnap.data ?? [];
+              print('Broj učitanih SlideData: \\${slides.length}');
+              for (var slide in slides) {
+                print('SlideData: title=\\${slide.title}, desc=\\${slide.desc}, price=\\${slide.price}, productUrls=\\${slide.productUrls.length}');
+              }
               return CarouselSlider(
                 items: slides.map((slide) {
                   return SizedBox.expand(
